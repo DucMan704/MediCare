@@ -167,10 +167,6 @@ app.get("/", (req, res) => {
   res.send("API Working");
 });
 
-// ===== Khởi động Node server sau khi ml-service sẵn sàng =====
-waitForMLService().then((ready) => {
-  if (!ready) {
-    console.error("ML service did not start in time. Check ml-service logs.");
-  }
-  app.listen(port, () => console.log(`Server started on PORT:${port}`));
+app.listen(port, () => {
+  console.log(`Server started on PORT:${port}`);
 });
