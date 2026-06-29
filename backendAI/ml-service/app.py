@@ -3,7 +3,7 @@ from flask_cors import CORS
 import pickle
 import joblib
 import numpy as np
-import pandas as pd         
+import pandas as pd
 from tensorflow.keras.models import load_model
 from PIL import Image
 import io
@@ -24,21 +24,82 @@ logging.getLogger("werkzeug").setLevel(logging.ERROR)
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
-# ----- Load model tabular (.pkl) -----
+
+MODELS_DIR = os.path.join("../", "ml-models")
+
+
+diabetes_model = None
+stroke_model = None
+malaria_model = None
+pneumonia_model = None
+
+
 def load_pkl(path):
     with open(path, "rb") as f:
         return pickle.load(f)
 
-diabetes_model = load_pkl("../ml-models/diabetes.pkl")
-stroke_model = joblib.load("../ml-models/stroke_model.joblib")
 
-# ----- Load model ảnh (.h5) -----
-malaria_model = load_model("../ml-models/malaria.h5")
-pneumonia_model = load_model("../ml-models/pneumonia.h5")
+def load_models():
+    global diabetes_model, stroke_model, malaria_model, pneumonia_model
+
+    try:
+        diabetes_model = load_pkl(os.path.join(MODELS_DIR, "diabetes.pkl"))
+        print("Diabetes model loaded.")
+    except Exception as e:
+        print(f"Warning: could not load diabetes model: {e}")
+
+    try:
+        stroke_model = joblib.load(os.path.join(MODELS_DIR, "stroke_model.joblib"))
+        print("Stroke model loaded.")
+    except Exception as e:
+        print(f"Warning: could not load stroke model: {e}")
+
+    try:
+        malaria_model = load_model(
+            os.path.join(MODELS_DIR, "malaria.h5"),
+            compile=False,
+        )
+        print("Malaria model loaded.")
+    except Exception as e:
+        print(f"Warning: could not load malaria model: {e}")
+
+    try:
+        pneumonia_model = load_model(
+            os.path.join(MODELS_DIR, "pneumonia.h5"),
+            compile=False,
+        )
+        print("Pneumonia model loaded.")
+    except Exception as e:
+        print(f"Warning: could not load pneumonia model: {e}")
+
+
+load_models()
+
+
+@app.route("/", methods=["GET"])
+def index():
+    return "AI API Working"
+
+
+@app.route("/health", methods=["GET"])
+def health():
+    return jsonify({
+        "status": "ok",
+        "models": {
+            "diabetes": diabetes_model is not None,
+            "stroke": stroke_model is not None,
+            "malaria": malaria_model is not None,
+            "pneumonia": pneumonia_model is not None,
+        },
+    })
+
 
 # ===== DIABETES =====
-@app.route("/predict/diabetes", methods=["POST"])
+@app.route("/api/diagnosis/diabetes", methods=["POST"])
 def predict_diabetes():
+    if diabetes_model is None:
+        return jsonify({"message": "Diabetes model not loaded"}), 503
+
     data = request.get_json()
     try:
         features = np.array([[
@@ -58,8 +119,11 @@ def predict_diabetes():
 
 
 # ===== MALARIA (ảnh) =====
-@app.route("/predict/malaria", methods=["POST"])
+@app.route("/api/diagnosis/malaria", methods=["POST"])
 def predict_malaria():
+    if malaria_model is None:
+        return jsonify({"message": "Malaria model not loaded"}), 503
+
     if "image" not in request.files:
         return jsonify({"message": "No image uploaded"}), 400
 
@@ -81,8 +145,11 @@ def predict_malaria():
 
 
 # ===== PNEUMONIA (ảnh) =====
-@app.route("/predict/pneumonia", methods=["POST"])
+@app.route("/api/diagnosis/pneumonia", methods=["POST"])
 def predict_pneumonia():
+    if pneumonia_model is None:
+        return jsonify({"message": "Pneumonia model not loaded"}), 503
+
     if "image" not in request.files:
         return jsonify({"message": "No image uploaded"}), 400
 
@@ -127,6 +194,7 @@ def predict_pneumonia():
     except Exception as e:
         return jsonify({"message": str(e)}), 500
 
+
 # ===== STROKE =====
 WORK_TYPE_MAPPING = {
     "Government job": "Govt_job",
@@ -149,8 +217,11 @@ def predict_stroke_input(single_input):
     return prediction
 
 
-@app.route("/predict/stroke", methods=["POST"])
+@app.route("/api/diagnosis/stroke", methods=["POST"])
 def predict_stroke():
+    if stroke_model is None:
+        return jsonify({"message": "Stroke model not loaded"}), 503
+
     data = request.get_json()
     try:
         gender = data["gender"].lower()
@@ -185,8 +256,10 @@ def predict_stroke():
 
 
 if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 4001))
     app.run(
-        port=5001,
+        host="0.0.0.0",
+        port=port,
         debug=False,
         use_reloader=False
     )

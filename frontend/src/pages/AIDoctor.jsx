@@ -16,10 +16,7 @@ import {
   Mic,
 } from "lucide-react";
 
-const apiUrl = import.meta.env.PROD
-  ? import.meta.env.VITE_API_PROD_URL
-  : import.meta.env.VITE_API_URL;
-
+const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:4001/api/";
 const AIDoctor = () => {
   const [message, setMessage] = useState("");
   const [chats, setChats] = useState([]);
@@ -43,6 +40,7 @@ const AIDoctor = () => {
     setIsTyping(true);
 
     try {
+      console.log(`Sending request to ${apiUrl}messages`);
       const response = await axios.post(
         `${apiUrl}messages`,
         {

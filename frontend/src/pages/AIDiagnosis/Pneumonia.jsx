@@ -43,7 +43,7 @@ const Pneumonia = () => {
       formData.append("image", imageFile);
 
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/diagnosis/pneumonia`,
+        `${import.meta.env.VITE_AI_BACKEND_URL || "http://localhost:4001"}/api/diagnosis/pneumonia`,
         {
           method: "POST",
           body: formData,

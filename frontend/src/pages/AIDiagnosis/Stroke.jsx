@@ -112,7 +112,7 @@ const Stroke = () => {
     setLoading(true);
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/diagnosis/stroke`,
+        `${import.meta.env.VITE_AI_BACKEND_URL || "http://localhost:4001"}/api/diagnosis/stroke`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
