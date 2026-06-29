@@ -32,50 +32,42 @@ app.use(cors());
 
 const upload = multer({ storage: multer.memoryStorage() });
 
-// ===== Tự động khởi động ml-service (Python) =====
-const mlServicePath = path.join(__dirname, "ml-service");
-const pythonPath = path.join(mlServicePath, "venv", "Scripts", "python.exe"); // Windows
-// const pythonPath = path.join(mlServicePath, "venv", "bin", "python"); // macOS/Linux
+// // ===== Tự động khởi động ml-service (Python) =====
+// const mlServicePath = path.join(__dirname, "ml-service");
+// const pythonPath = path.join(mlServicePath, "venv", "Scripts", "python.exe"); // Windows
+// // const pythonPath = path.join(mlServicePath, "venv", "bin", "python"); // macOS/Linux
 
-console.log("Starting ML service...");
+// console.log("Starting ML service...");
 
-const mlProcess = spawn(pythonPath, ["app.py"], {
-  cwd: mlServicePath,
-});
+// const mlProcess = spawn(pythonPath, ["app.py"], {
+//   cwd: mlServicePath,
+// });
 
-mlProcess.stdout.on("data", (data) => {
-  console.log(`[ML Service] ${data}`.trim());
-});
+// mlProcess.stdout.on("data", (data) => {
+//   console.log(`[ML Service] ${data}`.trim());
+// });
 
-mlProcess.stderr.on("data", (data) => {
-  console.error(`[ML Service Error] ${data}`.trim());
-});
+// mlProcess.stderr.on("data", (data) => {
+//   console.error(`[ML Service Error] ${data}`.trim());
+// });
 
-mlProcess.on("close", (code) => {
-  console.log(`ML service exited with code ${code}`);
-});
+// mlProcess.on("close", (code) => {
+//   console.log(`ML service exited with code ${code}`);
+// });
 
-process.on("SIGINT", () => {
-  mlProcess.kill();
-  process.exit();
-});
+// process.on("SIGINT", () => {
+//   mlProcess.kill();
+//   process.exit();
+// });
 
-process.on("exit", () => {
-  mlProcess.kill();
-});
+// process.on("exit", () => {
+//   mlProcess.kill();
+// });
 
 // ===== Chờ ml-service sẵn sàng =====
-const waitForMLService = async (retries = 20) => {
-  for (let i = 0; i < retries; i++) {
-    try {
-      await fetch(`${ML_SERVICE_URL}/`);
-      return true;
-    } catch {
-      await new Promise((r) => setTimeout(r, 1000));
-    }
-  }
-  return false;
-};
+app.listen(port, () => {
+  console.log(`Server started on PORT:${port}`);
+});
 
 // api endpoints (giữ nguyên)
 app.use("/api/user", userRouter);
