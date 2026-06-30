@@ -10,72 +10,113 @@ import doctorRouter from "./routes/doctorRoute.js";
 import adminRouter from "./routes/adminRoute.js";
 import messageRouter from "./routes/messageRoute.js";
 
-// =======================
-// APP CONFIG
-// =======================
 
 const app = express();
 
 const port = process.env.PORT || 4000;
 
-// =======================
-// DATABASE + CLOUDINARY
-// =======================
+
+// ===============================
+// CONNECT DATABASE + CLOUDINARY
+// ===============================
 
 connectDB();
 connectCloudinary();
 
-// =======================
-// CORS CONFIG
-// =======================
+
+
+// ===============================
+// CORS CONFIGURATION
+// ===============================
 
 const allowedOrigins = [
-  "http://localhost:5173",
 
-  // User frontend
-  "https://medi-care-ochre.vercel.app",
+    // Local development
+    "http://localhost:5173",
 
-  // Admin frontend
-  "https://medi-care-admin-tau.vercel.app",
+    // User frontend
+    "https://medi-care-ochre.vercel.app",
+
+    // Admin frontend
+    "https://medi-care-admin-tau.vercel.app"
 ];
 
+
 const corsOptions = {
-  origin: function (origin, callback) {
-    // Cho phép Postman, mobile app,
-    // server gọi server không có Origin
-    if (!origin) {
-      return callback(null, true);
-    }
 
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
+    origin: (origin, callback) => {
 
-    return callback(new Error("Not allowed by CORS"));
-  },
 
-  credentials: true,
+        // Cho phép request không có origin
+        // Ví dụ: Postman, server request
+        if (!origin) {
+            return callback(null, true);
+        }
 
-  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
 
-  allowedHeaders: ["Content-Type", "Authorization", "atoken"],
+        if (allowedOrigins.includes(origin)) {
+
+            return callback(null, true);
+
+        }
+
+
+        return callback(
+            new Error("Not allowed by CORS")
+        );
+    },
+
+
+    credentials: true,
+
+
+    methods: [
+        "GET",
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE",
+        "OPTIONS"
+    ],
+
+
+    allowedHeaders: [
+
+        // JSON request
+        "Content-Type",
+
+        // JWT chuẩn (nếu dùng)
+        "Authorization",
+
+        // Admin token
+        "atoken",
+
+        // Doctor token
+        "dtoken"
+    ]
 };
+
 
 // CORS phải đặt trước routes
 app.use(cors(corsOptions));
 
-// xử lý request OPTIONS (preflight)
+
+// Xử lý preflight request
 app.options("*", cors(corsOptions));
 
-// =======================
-// MIDDLEWARE
-// =======================
+
+
+// ===============================
+// BODY PARSER
+// ===============================
 
 app.use(express.json());
 
-// =======================
-// ROUTES
-// =======================
+
+
+// ===============================
+// API ROUTES
+// ===============================
 
 app.use("/api/user", userRouter);
 
@@ -85,38 +126,69 @@ app.use("/api/doctor", doctorRouter);
 
 app.use("/api/messages", messageRouter);
 
-// =======================
+
+
+// ===============================
 // TEST API
-// =======================
+// ===============================
 
 app.get("/", (req, res) => {
-  res.send("API Working");
+
+    res.status(200).send(
+        "API Working"
+    );
+
 });
 
-// =======================
+
+
+// ===============================
 // ERROR HANDLER
-// =======================
+// ===============================
 
 app.use((err, req, res, next) => {
-  console.error(err.message);
 
-  if (err.message === "Not allowed by CORS") {
-    return res.status(403).json({
-      success: false,
-      message: "CORS blocked",
+
+    console.error(
+        "SERVER ERROR:",
+        err.message
+    );
+
+
+    if (err.message === "Not allowed by CORS") {
+
+        return res.status(403).json({
+
+            success: false,
+
+            message: "CORS blocked"
+
+        });
+
+    }
+
+
+
+    res.status(500).json({
+
+        success:false,
+
+        message:"Internal Server Error"
+
     });
-  }
 
-  res.status(500).json({
-    success: false,
-    message: "Server error",
-  });
 });
 
-// =======================
+
+
+// ===============================
 // START SERVER
-// =======================
+// ===============================
 
 app.listen(port, () => {
-  console.log(`Server running on PORT:${port}`);
+
+    console.log(
+        `Server running on PORT:${port}`
+    );
+
 });
