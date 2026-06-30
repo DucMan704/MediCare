@@ -14,30 +14,23 @@ const app = express();
 
 const port = process.env.PORT || 4000;
 
-// =======================
-// Connect Database
-// =======================
 connectDB();
-
-// =======================
-// Connect Cloudinary
-// =======================
 connectCloudinary();
-
-// =======================
-// CORS CONFIG
-// =======================
 
 const allowedOrigins = [
   "http://localhost:5173",
+
+  // User frontend
   "https://medi-care-ochre.vercel.app",
+
+  // Admin frontend
+  "https://medi-care-admin-tau.vercel.app",
 ];
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      // Cho phép request không có origin
-      // (Postman, server-to-server)
+      // Cho phép Postman, mobile app...
       if (!origin) {
         return callback(null, true);
       }
@@ -57,18 +50,10 @@ app.use(
   }),
 );
 
-// xử lý preflight request
+// xử lý preflight
 app.options("*", cors());
 
-// =======================
-// BODY PARSER
-// =======================
-
 app.use(express.json());
-
-// =======================
-// ROUTES
-// =======================
 
 app.use("/api/user", userRouter);
 
@@ -78,18 +63,10 @@ app.use("/api/doctor", doctorRouter);
 
 app.use("/api/messages", messageRouter);
 
-// =======================
-// TEST API
-// =======================
-
 app.get("/", (req, res) => {
   res.send("API Working");
 });
 
-// =======================
-// START SERVER
-// =======================
-
 app.listen(port, () => {
-  console.log(`Server started on PORT:${port}`);
+  console.log(`Server running on PORT ${port}`);
 });
