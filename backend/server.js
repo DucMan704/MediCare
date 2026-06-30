@@ -10,12 +10,24 @@ import doctorRouter from "./routes/doctorRoute.js";
 import adminRouter from "./routes/adminRoute.js";
 import messageRouter from "./routes/messageRoute.js";
 
+// =======================
+// APP CONFIG
+// =======================
+
 const app = express();
 
 const port = process.env.PORT || 4000;
 
+// =======================
+// DATABASE + CLOUDINARY
+// =======================
+
 connectDB();
 connectCloudinary();
+
+// =======================
+// CORS CONFIG
+// =======================
 
 const allowedOrigins = [
   "http://localhost:5173",
@@ -27,33 +39,43 @@ const allowedOrigins = [
   "https://medi-care-admin-tau.vercel.app",
 ];
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      // Cho phép Postman, mobile app...
-      if (!origin) {
-        return callback(null, true);
-      }
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Cho phép Postman, mobile app,
+    // server gọi server không có Origin
+    if (!origin) {
+      return callback(null, true);
+    }
 
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
 
-      return callback(new Error("Not allowed by CORS"));
-    },
+    return callback(new Error("Not allowed by CORS"));
+  },
 
-    credentials: true,
+  credentials: true,
 
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
 
-    allowedHeaders: ["Content-Type", "Authorization"],
-  }),
-);
+  allowedHeaders: ["Content-Type", "Authorization", "atoken"],
+};
 
-// xử lý preflight
-app.options("*", cors());
+// CORS phải đặt trước routes
+app.use(cors(corsOptions));
+
+// xử lý request OPTIONS (preflight)
+app.options("*", cors(corsOptions));
+
+// =======================
+// MIDDLEWARE
+// =======================
 
 app.use(express.json());
+
+// =======================
+// ROUTES
+// =======================
 
 app.use("/api/user", userRouter);
 
@@ -63,10 +85,38 @@ app.use("/api/doctor", doctorRouter);
 
 app.use("/api/messages", messageRouter);
 
+// =======================
+// TEST API
+// =======================
+
 app.get("/", (req, res) => {
   res.send("API Working");
 });
 
+// =======================
+// ERROR HANDLER
+// =======================
+
+app.use((err, req, res, next) => {
+  console.error(err.message);
+
+  if (err.message === "Not allowed by CORS") {
+    return res.status(403).json({
+      success: false,
+      message: "CORS blocked",
+    });
+  }
+
+  res.status(500).json({
+    success: false,
+    message: "Server error",
+  });
+});
+
+// =======================
+// START SERVER
+// =======================
+
 app.listen(port, () => {
-  console.log(`Server running on PORT ${port}`);
+  console.log(`Server running on PORT:${port}`);
 });
